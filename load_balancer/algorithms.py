@@ -4,6 +4,7 @@ Different strategies for distributing traffic
 """
 
 import random
+from threading import Lock
 from typing import List
 from services.service_instance import ServiceInstance
 
@@ -27,26 +28,31 @@ class RoundRobinAlgorithm(LoadBalancingAlgorithm):
     Round-Robin Algorithm
     Distributes requests evenly across all instances in rotation
     """
-    
+
+    def __init__(self):
+        super().__init__()
+        self._lock = Lock()
+
     def select_instance(self, instances: List[ServiceInstance]) -> ServiceInstance:
         """
         Select next instance using round-robin
-        
+
         Args:
             instances: List of healthy service instances
-            
+
         Returns:
             Selected service instance
         """
         if not instances:
             return None
-        
-        # Get current instance
-        instance = instances[self.current_index % len(instances)]
-        
-        # Move to next
-        self.current_index += 1
-        
+
+        with self._lock:
+            # Get current instance
+            instance = instances[self.current_index % len(instances)]
+
+            # Move to next
+            self.current_index += 1
+
         return instance
 
 
@@ -56,39 +62,41 @@ class WeightedRoundRobinAlgorithm(LoadBalancingAlgorithm):
     Distributes requests based on instance weights
     Higher weight = more requests
     """
-    
+
     def __init__(self):
         super().__init__()
+        self._lock = Lock()
         self.weighted_instances = []
         self.last_instances = None
     
     def select_instance(self, instances: List[ServiceInstance]) -> ServiceInstance:
         """
         Select next instance using weighted round-robin
-        
+
         Args:
             instances: List of healthy service instances
-            
+
         Returns:
             Selected service instance
         """
         if not instances:
             return None
-        
-        # Rebuild weighted list if instances changed
-        if instances != self.last_instances:
-            self._build_weighted_list(instances)
-            self.last_instances = instances
-        
-        if not self.weighted_instances:
-            return instances[0]
-        
-        # Get current instance
-        instance = self.weighted_instances[self.current_index % len(self.weighted_instances)]
-        
-        # Move to next
-        self.current_index += 1
-        
+
+        with self._lock:
+            # Rebuild weighted list if instances changed
+            if instances != self.last_instances:
+                self._build_weighted_list(instances)
+                self.last_instances = instances
+
+            if not self.weighted_instances:
+                return instances[0]
+
+            # Get current instance
+            instance = self.weighted_instances[self.current_index % len(self.weighted_instances)]
+
+            # Move to next
+            self.current_index += 1
+
         return instance
     
     def _build_weighted_list(self, instances: List[ServiceInstance]):

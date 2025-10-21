@@ -35,7 +35,7 @@ def demo_round_robin():
     for instance in lb.instances:
         instance.mark_healthy()
     
-    print("\n📊 Distributing 6 requests with Round-Robin:")
+    print("\n[STATS] Distributing 6 requests with Round-Robin:")
     for i in range(6):
         instance = lb.get_next_instance()
         print(f"   Request {i+1} -> {instance.name}")
@@ -56,7 +56,7 @@ def demo_weighted_algorithm():
     for instance in lb.instances:
         instance.mark_healthy()
     
-    print("\n📊 Distributing 12 requests with Weighted Round-Robin:")
+    print("\n[STATS] Distributing 12 requests with Weighted Round-Robin:")
     print("   Weights: service-1=3, service-2=2, service-3=1")
     
     distribution = {}
@@ -83,11 +83,11 @@ def demo_health_monitoring():
     lb.instances[0].mark_healthy()
     lb.instances[1].mark_unhealthy()
     
-    print("\n🏥 Instance Health Status:")
+    print("\n[HEALTH] Instance Health Status:")
     for instance in lb.instances:
         print(f"   {instance.name}: {instance.health_status.value}")
     
-    print("\n✅ Healthy instances:")
+    print("\n[PASS] Healthy instances:")
     healthy = lb.get_healthy_instances()
     for instance in healthy:
         print(f"   - {instance.name}")
@@ -99,36 +99,36 @@ def demo_circuit_breaker():
     
     breaker = CircuitBreaker(failure_threshold=3, timeout=5)
     
-    print(f"\n🔌 Initial state: {breaker.state.value}")
+    print(f"\n[CONNECT] Initial state: {breaker.state.value}")
     
     # Simulate failures
-    print("\n❌ Simulating 3 failures...")
+    print("\n[FAIL] Simulating 3 failures...")
     for i in range(3):
         try:
             breaker.call(lambda: (_ for _ in ()).throw(Exception("Service error")))
         except:
             print(f"   Failure {i+1}: State = {breaker.state.value}")
     
-    print(f"\n🔌 Circuit breaker is now: {breaker.state.value}")
+    print(f"\n[CONNECT] Circuit breaker is now: {breaker.state.value}")
     
     # Try to call when OPEN
-    print("\n🚫 Trying to call when circuit is OPEN...")
+    print("\n[BLOCKED] Trying to call when circuit is OPEN...")
     try:
         breaker.call(lambda: "success")
     except Exception as e:
-        print(f"   ❌ Rejected: {e}")
+        print(f"   [FAIL] Rejected: {e}")
     
     # Wait for timeout
-    print(f"\n⏳ Waiting {breaker.timeout} seconds for timeout...")
+    print(f"\n[WAIT] Waiting {breaker.timeout} seconds for timeout...")
     time.sleep(breaker.timeout)
     
     # Should transition to HALF_OPEN
-    print("\n✅ Attempting call after timeout...")
+    print("\n[PASS] Attempting call after timeout...")
     try:
         result = breaker.call(lambda: "success")
-        print(f"   ✅ Success! State = {breaker.state.value}")
+        print(f"   [PASS] Success! State = {breaker.state.value}")
     except Exception as e:
-        print(f"   ❌ Failed: {e}")
+        print(f"   [FAIL] Failed: {e}")
 
 
 def demo_failover():
@@ -150,18 +150,18 @@ def demo_failover():
     lb.instances[0].mark_healthy()
     lb.instances[1].mark_healthy()
     
-    print("\n✅ Initial state:")
+    print("\n[PASS] Initial state:")
     print(f"   Primary: {lb.instances[0].name} - {lb.instances[0].health_status.value}")
     print(f"   Backup: {lb.instances[1].name} - {lb.instances[1].health_status.value}")
     
     # Simulate primary failure
-    print("\n❌ Primary instance fails...")
+    print("\n[FAIL] Primary instance fails...")
     lb.instances[0].mark_unhealthy()
     
     # Check and perform failover
     failover.check_and_failover()
     
-    print("\n✅ After failover:")
+    print("\n[PASS] After failover:")
     print(f"   Primary: {lb.instances[0].name} - {lb.instances[0].health_status.value}")
     print(f"   Backup: {lb.instances[1].name} - {lb.instances[1].health_status.value}")
 
@@ -173,7 +173,7 @@ def demo_traffic_analytics():
     analytics = TrafficAnalytics()
     
     # Simulate requests
-    print("\n📊 Simulating requests...")
+    print("\n[STATS] Simulating requests...")
     analytics.record_request("service-1", True, 0.05)
     analytics.record_request("service-1", True, 0.03)
     analytics.record_request("service-2", True, 0.08)
@@ -181,7 +181,7 @@ def demo_traffic_analytics():
     analytics.record_request("service-3", True, 0.04)
     
     # Get overall stats
-    print("\n📈 Overall Statistics:")
+    print("\n[TREND] Overall Statistics:")
     stats = analytics.get_overall_stats()
     print(f"   Total requests: {stats['total_requests']}")
     print(f"   Successful: {stats['successful_requests']}")
@@ -190,7 +190,7 @@ def demo_traffic_analytics():
     print(f"   Avg response time: {stats['avg_response_time']}")
     
     # Get distribution
-    print("\n📊 Traffic Distribution:")
+    print("\n[STATS] Traffic Distribution:")
     distribution = analytics.get_traffic_distribution()
     for instance, data in distribution.items():
         print(f"   {instance}: {data['requests']} requests ({data['percentage']})")
@@ -216,11 +216,11 @@ def demo_least_connections():
     lb.instances[1].active_connections = 2
     lb.instances[2].active_connections = 8
     
-    print("\n📊 Active Connections:")
+    print("\n[STATS] Active Connections:")
     for instance in lb.instances:
         print(f"   {instance.name}: {instance.active_connections} connections")
     
-    print("\n🎯 Next 3 requests will go to instance with least connections:")
+    print("\n[TARGET] Next 3 requests will go to instance with least connections:")
     for i in range(3):
         instance = lb.get_next_instance()
         print(f"   Request {i+1} -> {instance.name} ({instance.active_connections} connections)")
@@ -257,7 +257,7 @@ def main():
         print()
         
     except Exception as e:
-        print(f"\n❌ Error: {e}")
+        print(f"\n[FAIL] Error: {e}")
         import traceback
         traceback.print_exc()
 

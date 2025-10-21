@@ -6,6 +6,7 @@ Main load balancer implementation
 import logging
 import requests
 import time
+from threading import Lock
 from typing import List, Optional
 from services.service_instance import ServiceInstance, HealthStatus
 from load_balancer.algorithms import get_algorithm
@@ -22,43 +23,47 @@ class LoadBalancer:
     def __init__(self, algorithm='round_robin'):
         """
         Initialize load balancer
-        
+
         Args:
             algorithm: Load balancing algorithm to use
         """
+        self._lock = Lock()
         self.instances: List[ServiceInstance] = []
         self.algorithm = get_algorithm(algorithm)
         self.algorithm_name = algorithm
-        
+
         logger.info(f"Load Balancer initialized with {algorithm} algorithm")
     
     def add_instance(self, name: str, url: str, weight: int = 1):
         """
         Add a service instance to the pool
-        
+
         Args:
             name: Instance name
             url: Instance URL
             weight: Instance weight (for weighted algorithms)
         """
         instance = ServiceInstance(name, url, weight)
-        self.instances.append(instance)
-        
+        with self._lock:
+            self.instances.append(instance)
+
         logger.info(f"Added instance: {name} ({url}) with weight {weight}")
-    
+
     def remove_instance(self, name: str):
         """
         Remove a service instance from the pool
-        
+
         Args:
             name: Instance name to remove
         """
-        self.instances = [i for i in self.instances if i.name != name]
+        with self._lock:
+            self.instances = [i for i in self.instances if i.name != name]
         logger.info(f"Removed instance: {name}")
     
     def get_healthy_instances(self) -> List[ServiceInstance]:
         """Get list of healthy instances"""
-        return [i for i in self.instances if i.is_healthy()]
+        with self._lock:
+            return [i for i in self.instances if i.is_healthy()]
     
     def get_next_instance(self) -> Optional[ServiceInstance]:
         """
@@ -146,22 +151,26 @@ class LoadBalancer:
     
     def get_instance_by_name(self, name: str) -> Optional[ServiceInstance]:
         """Get instance by name"""
-        for instance in self.instances:
-            if instance.name == name:
-                return instance
+        with self._lock:
+            for instance in self.instances:
+                if instance.name == name:
+                    return instance
         return None
-    
+
     def get_stats(self):
         """Get load balancer statistics"""
-        total_requests = sum(i.total_requests for i in self.instances)
-        total_failures = sum(i.failed_requests for i in self.instances)
-        
+        with self._lock:
+            instances_copy = self.instances[:]
+
+        total_requests = sum(i.total_requests for i in instances_copy)
+        total_failures = sum(i.failed_requests for i in instances_copy)
+
         return {
             'algorithm': self.algorithm_name,
-            'total_instances': len(self.instances),
+            'total_instances': len(instances_copy),
             'healthy_instances': len(self.get_healthy_instances()),
             'total_requests': total_requests,
             'total_failures': total_failures,
             'overall_error_rate': f"{(total_failures / total_requests * 100) if total_requests > 0 else 0:.2f}%",
-            'instances': [i.get_stats() for i in self.instances]
+            'instances': [i.get_stats() for i in instances_copy]
         }

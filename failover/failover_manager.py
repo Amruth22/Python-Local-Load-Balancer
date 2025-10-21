@@ -4,6 +4,7 @@ Manages automatic failover and failback
 """
 
 import logging
+import time
 from services.service_instance import ServiceInstance
 
 logger = logging.getLogger(__name__)
@@ -105,7 +106,7 @@ class FailoverManager:
             'reason': 'primary_unhealthy'
         })
         
-        print(f"\n⚠️  FAILOVER: {primary.name} is unhealthy, switching to {backup.name}")
+        print(f"\n[WARNING]  FAILOVER: {primary.name} is unhealthy, switching to {backup.name}")
     
     def _perform_failback(self, primary: ServiceInstance, backup: ServiceInstance):
         """
@@ -126,7 +127,7 @@ class FailoverManager:
             'reason': 'primary_recovered'
         })
         
-        print(f"\n✅ FAILBACK: {primary.name} recovered, switching back from {backup.name}")
+        print(f"\n[PASS] FAILBACK: {primary.name} recovered, switching back from {backup.name}")
     
     def get_failover_history(self):
         """Get failover history"""

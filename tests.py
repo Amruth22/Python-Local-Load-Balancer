@@ -57,7 +57,7 @@ class LoadBalancerTestCase(unittest.TestCase):
         self.assertEqual(selected[2], "service-3")
         self.assertEqual(selected[3], "service-1")
         
-        print(f"   ✅ Round-robin rotation: {selected}")
+        print(f"   [PASS] Round-robin rotation: {selected}")
     
     # Test 2: Weighted Algorithm
     def test_02_weighted_algorithm(self):
@@ -82,7 +82,7 @@ class LoadBalancerTestCase(unittest.TestCase):
         
         # service-1 should get 3x more requests
         self.assertGreater(distribution['service-1'], distribution['service-2'])
-        print(f"   ✅ Weighted distribution: {distribution}")
+        print(f"   [PASS] Weighted distribution: {distribution}")
     
     # Test 3: Health Monitoring
     def test_03_health_monitoring(self):
@@ -98,16 +98,16 @@ class LoadBalancerTestCase(unittest.TestCase):
         instance.mark_healthy()
         self.assertEqual(instance.health_status, HealthStatus.HEALTHY)
         self.assertTrue(instance.is_healthy())
-        print("   ✅ Instance marked as healthy")
+        print("   [PASS] Instance marked as healthy")
         
         instance.mark_unhealthy()
         self.assertEqual(instance.health_status, HealthStatus.UNHEALTHY)
         self.assertFalse(instance.is_healthy())
-        print("   ✅ Instance marked as unhealthy")
+        print("   [PASS] Instance marked as unhealthy")
         
         # Test consecutive failures
         self.assertGreater(instance.consecutive_failures, 0)
-        print(f"   ✅ Consecutive failures tracked: {instance.consecutive_failures}")
+        print(f"   [PASS] Consecutive failures tracked: {instance.consecutive_failures}")
     
     # Test 4: Circuit Breaker
     def test_04_circuit_breaker(self):
@@ -118,7 +118,7 @@ class LoadBalancerTestCase(unittest.TestCase):
         
         # Initial state should be CLOSED
         self.assertEqual(breaker.state, CircuitState.CLOSED)
-        print(f"   ✅ Initial state: {breaker.state.value}")
+        print(f"   [PASS] Initial state: {breaker.state.value}")
         
         # Simulate failures
         for i in range(3):
@@ -129,12 +129,12 @@ class LoadBalancerTestCase(unittest.TestCase):
         
         # Should be OPEN now
         self.assertEqual(breaker.state, CircuitState.OPEN)
-        print(f"   ✅ After 3 failures: {breaker.state.value}")
+        print(f"   [PASS] After 3 failures: {breaker.state.value}")
         
         # Should reject calls when OPEN
         with self.assertRaises(Exception):
             breaker.call(lambda: "success")
-        print("   ✅ Calls rejected when OPEN")
+        print("   [PASS] Calls rejected when OPEN")
         
         # Wait for timeout
         time.sleep(1.5)
@@ -142,7 +142,7 @@ class LoadBalancerTestCase(unittest.TestCase):
         # Should allow call and transition to HALF_OPEN
         try:
             breaker.call(lambda: "success")
-            print(f"   ✅ After timeout: {breaker.state.value}")
+            print(f"   [PASS] After timeout: {breaker.state.value}")
         except:
             pass
     
@@ -169,7 +169,7 @@ class LoadBalancerTestCase(unittest.TestCase):
         # Verify failover was recorded
         history = failover.get_failover_history()
         self.assertGreater(len(history), 0)
-        print(f"   ✅ Failover executed: {len(history)} events")
+        print(f"   [PASS] Failover executed: {len(history)} events")
     
     # Test 6: Service Pool Management
     def test_06_service_pool_management(self):
@@ -183,14 +183,14 @@ class LoadBalancerTestCase(unittest.TestCase):
         lb.add_instance("service-2", "http://localhost:5002")
         
         self.assertEqual(len(lb.instances), 2)
-        print(f"   ✅ Added 2 instances: {len(lb.instances)} total")
+        print(f"   [PASS] Added 2 instances: {len(lb.instances)} total")
         
         # Remove instance
         lb.remove_instance("service-1")
         
         self.assertEqual(len(lb.instances), 1)
         self.assertEqual(lb.instances[0].name, "service-2")
-        print(f"   ✅ Removed 1 instance: {len(lb.instances)} remaining")
+        print(f"   [PASS] Removed 1 instance: {len(lb.instances)} remaining")
     
     # Test 7: Traffic Analytics
     def test_07_traffic_analytics(self):
@@ -210,13 +210,13 @@ class LoadBalancerTestCase(unittest.TestCase):
         self.assertEqual(stats['total_requests'], 3)
         self.assertEqual(stats['successful_requests'], 2)
         self.assertEqual(stats['failed_requests'], 1)
-        print(f"   ✅ Total requests: {stats['total_requests']}")
-        print(f"   ✅ Error rate: {stats['error_rate']}")
+        print(f"   [PASS] Total requests: {stats['total_requests']}")
+        print(f"   [PASS] Error rate: {stats['error_rate']}")
         
         # Get distribution
         distribution = analytics.get_traffic_distribution()
         self.assertIn('service-1', distribution)
-        print(f"   ✅ Traffic distribution: {len(distribution)} instances")
+        print(f"   [PASS] Traffic distribution: {len(distribution)} instances")
     
     # Test 8: Least Connections Algorithm
     def test_08_least_connections_algorithm(self):
@@ -241,7 +241,7 @@ class LoadBalancerTestCase(unittest.TestCase):
         instance = lb.get_next_instance()
         
         self.assertEqual(instance.name, "service-2")
-        print(f"   ✅ Selected instance with least connections: {instance.name}")
+        print(f"   [PASS] Selected instance with least connections: {instance.name}")
     
     # Test 9: Load Distribution
     def test_09_load_distribution(self):
@@ -265,7 +265,7 @@ class LoadBalancerTestCase(unittest.TestCase):
         for count in distribution.values():
             self.assertEqual(count, 3)
         
-        print(f"   ✅ Even distribution: {distribution}")
+        print(f"   [PASS] Even distribution: {distribution}")
     
     # Test 10: Service Recovery
     def test_10_service_recovery(self):
@@ -280,14 +280,14 @@ class LoadBalancerTestCase(unittest.TestCase):
         # Mark as unhealthy
         instance.mark_unhealthy()
         self.assertFalse(instance.is_healthy())
-        print(f"   ✅ Instance unhealthy: {instance.health_status.value}")
+        print(f"   [PASS] Instance unhealthy: {instance.health_status.value}")
         
         # Recover
         instance.mark_healthy()
         self.assertTrue(instance.is_healthy())
         self.assertEqual(instance.consecutive_failures, 0)
-        print(f"   ✅ Instance recovered: {instance.health_status.value}")
-        print(f"   ✅ Consecutive failures reset: {instance.consecutive_failures}")
+        print(f"   [PASS] Instance recovered: {instance.health_status.value}")
+        print(f"   [PASS] Consecutive failures reset: {instance.consecutive_failures}")
 
 
 def run_tests():
@@ -313,7 +313,7 @@ def run_tests():
         print(f"Success rate: {success_rate:.1f}%")
     
     if result.failures:
-        print("\n❌ FAILURES:")
+        print("\n[FAIL] FAILURES:")
         for test, traceback in result.failures:
             print(f"  - {test}")
     
@@ -338,7 +338,7 @@ if __name__ == "__main__":
         success = run_tests()
         exit(0 if success else 1)
     except KeyboardInterrupt:
-        print("\n\n⚠️  Tests interrupted by user")
+        print("\n\n[WARNING]  Tests interrupted by user")
         exit(1)
     except Exception as e:
         print(f"\n\n💥 Unexpected error: {e}")
